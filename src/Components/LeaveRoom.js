@@ -30,4 +30,4 @@ const LeaveRoom = ({handleLeaveRoom}) => {
   )
 }
 
-export default LeaveRoom
+export default LeaveRoom;

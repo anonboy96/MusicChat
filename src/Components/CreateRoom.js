@@ -93,4 +93,4 @@ function CreateRoom() {
   </Modal>
   );
 }
-export default CreateRoom
+export default CreateRoom;

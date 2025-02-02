@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../firebase-config';
 import { signOut } from 'firebase/auth';
 import { IoBookmarksOutline } from 'react-icons/io5';
@@ -12,6 +12,7 @@ const Profile = () => {
   const [myRoom, setMyRoom] = useState([]);
   const { setPathName } = useStateContext();
 
+  // Sign out user and navigate to home
   const signOutUser = () => {
     signOut(auth)
       .then(() => {
@@ -23,6 +24,7 @@ const Profile = () => {
       });
   };
 
+  // Fetch user's rooms from Firestore
   useEffect(() => {
     const getData = async () => {
       const filteredQuery = query(collection(db, 'room'), where('roomAdmin', '==', Cookies.get('name')));
@@ -31,6 +33,38 @@ const Profile = () => {
     };
     getData();
   }, []);
+
+  // Exit room functionality
+  const handleExitRoom = async () => {
+    const roomCode = sessionStorage.getItem('roomCode');
+    if (!roomCode) {
+      console.error("No room code found in session storage.");
+      return; // Exit if no room code is present
+    }
+
+    const roomRef = doc(db, 'room', roomCode);
+    try {
+      const currentMembersSnapshot = await getDocs(query(collection(db, 'room'), where('roomCode', '==', roomCode)));
+      
+      if (!currentMembersSnapshot.empty) {
+        const currentMembers = currentMembersSnapshot.docs[0].data().members || [];
+        const updatedMembers = currentMembers.filter(member => member !== Cookies.get('name'));
+        
+        await updateDoc(roomRef, { members: updatedMembers });
+
+        // Clear session storage and update state
+        sessionStorage.removeItem('roomCode');
+        setMyRoom([]); // Optionally clear the rooms state
+
+        // Redirect to home page after exiting the room
+        nav('/'); // Redirect to home page
+      } else {
+        console.error("Room not found or members list is empty.");
+      }
+    } catch (error) {
+      console.error("Error exiting room:", error);
+    }
+  };
 
   return (
     <div className='flex flex-col bg-black min-h-screen p-4'>
@@ -59,6 +93,16 @@ const Profile = () => {
         )}
       </div>
 
+      {/* Exit Room Button */}
+      {sessionStorage.getItem('roomCode') && (
+        <button 
+          className='mt-4 text-slate-50 flex items-center justify-start text-sm bg-red-60 hover:bg-red-500 p-2 rounded'
+          onClick={handleExitRoom}>
+          Exit Room
+        </button>
+      )}
+
+      {/* Other Links */}
       <div className='mt-4 mb-4 flex flex-col gap-3'>
         <h6 className='text-white font-semibold'>Others</h6>
         

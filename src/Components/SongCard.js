@@ -73,4 +73,4 @@ const SongCard = ({image,title,id,channelName,setToastDisplay,setToastMsg}) => {
   )
 }
 
-export default SongCard
+export default SongCard;
